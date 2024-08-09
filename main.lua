@@ -1,0 +1,265 @@
+-- REQUIRES
+Object = require("mod.classic")
+Terebi = require("mod.terebi")
+require("mod.pool")
+require("mod.player")
+require("mod.wave_manager")
+
+local screen
+local intermission_timer = 0
+local intermission_target = 10
+
+-- CONSTANTS
+GS_ACTIVE       = 0
+GS_DEAD         = 1
+GS_INTERMISSION = 2
+GS_PAUSED       = 3
+
+SCREEN_X  = 320
+SCREEN_Y  = 240
+
+-- MAIN FUNCTIONS
+function love.load()
+    -- Create a window using Terebi, so we have cleaner
+    -- pixel perfect rendering
+    Terebi.initializeLoveDefaults()
+    screen = Terebi.newScreen(320, 240, 2)
+        :setBackgroundColor(0,0,0)
+
+    -- Initialize graphics and center window
+    debug = love.graphics.newFont("asset/fnt/debug.ttf", 8)
+    font = love.graphics.setNewFont("asset/fnt/retro.ttf", 16)
+    love.graphics.setColor(1, 1, 1)
+    love.graphics.setBackgroundColor(0.2, 0.2, 0.2)
+    recenter()
+
+    -- Set up game variables
+    gLives = 3
+    gPoints = 0
+    gState = 0
+    gDebug = true
+
+    -- Set up objects/pools
+    gEnemies = Pool(10)
+    gPlayerBullets = Pool(3)
+    gWaveManager = WaveManager()
+    gPlayer = Player()
+
+    -- Load sound effects into memory
+    musDub = love.audio.newSource("asset/snd/jam2.xm", "static")
+    sfxShoot = love.audio.newSource("asset/snd/shoot.wav", "static")
+    sfxComplete = love.audio.newSource("asset/snd/wave_complete.wav", "static")
+    sfxBoom = love.audio.newSource("asset/snd/explode.wav", "static")
+
+    musDub:setVolume(0.25)
+    musDub:setLooping(true)
+    musDub:play()
+
+    -- Seed randomizer
+    math.randomseed(os.clock())
+end
+
+-- Handles rendering each frame.
+function drawFunction()
+    -- Render entities first
+    for i, v in ipairs(gPlayerBullets.pool) do v.draw(v) end
+    gPlayer.draw(gPlayer)
+    for i, v in ipairs(gEnemies.pool) do v.draw(v) end
+
+    -- Then render hud elements
+    switch(gState) {
+        [GS_ACTIVE] = function()
+            render_hud()
+            render_debug()
+        end,
+        [GS_INTERMISSION] = function()
+            render_wave_complete()
+        end,
+        [GS_PAUSED] = function()
+            render_pause()
+        end
+    }
+end
+
+function love.draw()
+    screen:draw(drawFunction)
+end
+
+-- Called each frame.
+function love.update(delta)
+    switch(gState) {
+        [GS_ACTIVE] = function()
+            -- Update player
+            gPlayer.update(gPlayer, delta)
+
+            -- Update wave manager
+            gWaveManager:update(delta)
+
+            -- Iterate and update bullets
+            for i, v in ipairs(gPlayerBullets.pool) do
+                v.update(v, delta)
+            end
+            for i, v in ipairs(gEnemies.pool) do
+                v.update(v, delta)
+            end
+        end,
+        [GS_INTERMISSION] = function()
+            -- Update timer
+            intermission_timer = intermission_timer + delta
+            if intermission_timer >= intermission_target then
+                intermission_timer = 0
+                gState = GS_ACTIVE
+            end
+        end,
+        [GS_DEAD] = function()
+
+        end,
+        [GS_PAUSED] = function()
+            -- Update pause processing
+        end
+    }
+end
+
+-- Called when key is pressed.
+function love.keypressed(key, scancode, isrepeat)
+    switch(gState) {
+        [GS_ACTIVE] = function()
+            -- Update player input
+            gPlayer.input(gPlayer, scancode)
+
+            -- Handle option input
+            input_option(scancode)
+        end,
+        __index = function()
+
+        end
+    }
+end
+
+-- Called when key is released.
+function love.keyreleased(key, scancode)
+    switch(gState) {
+        [GS_ACTIVE] = function()
+            -- Update player input
+            gPlayer.input(gPlayer)
+        end,
+        __index = function()
+
+        end
+    }
+end
+
+-- END PROCESS
+
+
+-- Manages option input
+function input_option(scancode)
+    -- Debug
+    if scancode == "f12" then
+        gDebug = not gDebug
+    end
+
+    -- Fullscreen
+    if scancode == "f11" then
+        screen:toggleFullscreen()
+        recenter()
+    end
+
+    -- Pause
+    if scancode == "escape" then
+        gState = GS_PAUSED
+    end
+end
+
+-- Renders HUD to screen
+function render_hud()
+    -- Draw HUD
+    love.graphics.setColor(0,0,0)
+    print_hud_text(string.format("Points: %08d", gPoints), {1,1,1}, 16, 16)
+    print_hud_text(string.format("Lives: %02d", gLives), {1,1,1}, 16, 32)
+end
+
+-- Renders debug info to screen, if applicable
+function render_debug()
+    -- Abort if outside of debug
+    if gDebug ~= true then
+        return
+    end
+
+    -- Render player x and y
+    print_small_text(string.format("x %03d y %03d", gPlayer.x, gPlayer.y), {1,1,1}, 16, SCREEN_Y - 24)
+    print_small_text(string.format("pbp %0d w %0.2f mw %0.2f", gPlayerBullets.count, gWaveManager.wait, gWaveManager.micro_wait), {1,1,1}, 16, SCREEN_Y - 16)
+end
+
+-- Renders pause menu
+function render_pause()
+
+    -- Render text
+    print_hud_text("PAUSED", {1,1,1}, 0, 96, "center")
+    print_small_text("Unpause by pressing ESCAPE.", {0.8,0.8,0.8}, 0, SCREEN_Y - 96, "center")
+end
+
+-- Renders wave complete banner
+function render_wave_complete()
+    -- Render banner
+    love.graphics.setColor(0,0,0,0.4)
+    love.graphics.rectangle("fill", 0, SCREEN_Y - 90, SCREEN_X, 64)
+
+    -- Render text
+    local str = string.format("Wave %0d Complete!", gWaveManager.wave)
+    print_hud_text(str, {1,1,1}, 0, SCREEN_Y - 64, "center")
+end
+
+-- Prints HUD text.
+function print_hud_text(str, color, x, y, align)
+    -- Default args
+    align = align or "left"
+
+    -- Print shadow first
+    love.graphics.setColor(0,0,0)
+    love.graphics.printf(str, love.math.newTransform(x + 1, y + 1), SCREEN_X - x, align)
+
+    -- Print main now
+    love.graphics.setColor(color[1], color[2], color[3])
+    love.graphics.printf(str, love.math.newTransform(x, y), SCREEN_X - x, align)
+end
+
+-- Prints small text.
+function print_small_text(str, color, x, y, align)
+    -- Get information about string
+    local len = string.len(str)
+    local xs = len * 8
+    local xb = align == "center" and SCREEN_X / 2 - xs / 2 or x
+
+    -- Print back first
+    love.graphics.setColor(0,0,0)
+    love.graphics.rectangle("fill", xb, y, xs, 8)
+
+    -- Print main now
+    love.graphics.setColor(color[1], color[2], color[3])
+    love.graphics.printf(str, debug, love.math.newTransform(x, y), SCREEN_X - x, align)
+end
+
+
+-- Centers window.
+function recenter()
+    local dim = {love.window.getDesktopDimensions(1)}
+    love.window.setPosition((dim[1] / 2) - SCREEN_X, (dim[2] / 2) - SCREEN_Y, 1)
+end
+
+-- Mimics functionality of switch cases
+function switch(x)
+    return function(cases)
+        setmetatable(cases, cases)
+        local func = cases[x]
+        if func then
+            func()
+        end
+    end
+end
+
+-- Ensures sound effect is played on call
+function forcePlay(sound)
+    sound:stop()
+    sound:play()
+end
