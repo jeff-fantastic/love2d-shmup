@@ -70,15 +70,16 @@ function drawFunction()
     switch(gState) {
         [GS_ACTIVE] = function()
             render_hud()
-            render_debug()
         end,
         [GS_INTERMISSION] = function()
+            render_hud()
             render_wave_complete()
         end,
         [GS_PAUSED] = function()
             render_pause()
         end
     }
+    render_debug()
 end
 
 function love.draw()
@@ -104,10 +105,14 @@ function love.update(delta)
             end
         end,
         [GS_INTERMISSION] = function()
+            -- Update player
+            gPlayer.update(gPlayer, delta)
+
             -- Update timer
             intermission_timer = intermission_timer + delta
             if intermission_timer >= intermission_target then
                 intermission_timer = 0
+                gWaveManager:incrementWave()
                 gState = GS_ACTIVE
             end
         end,
@@ -130,6 +135,14 @@ function love.keypressed(key, scancode, isrepeat)
             -- Handle option input
             input_option(scancode)
         end,
+        [GS_INTERMISSION] = function()
+            -- Update player input
+            gPlayer.input(gPlayer, scancode)
+        end,
+        [GS_PAUSED] = function()
+            -- Handle option input
+            input_option(scancode)
+        end,
         __index = function()
 
         end
@@ -142,6 +155,10 @@ function love.keyreleased(key, scancode)
         [GS_ACTIVE] = function()
             -- Update player input
             gPlayer.input(gPlayer)
+        end,
+        [GS_INTERMISSION] = function()
+            -- Update player input
+            gPlayer.input(gPlayer, scancode)
         end,
         __index = function()
 
@@ -167,7 +184,7 @@ function input_option(scancode)
 
     -- Pause
     if scancode == "escape" then
-        gState = GS_PAUSED
+        gState = gState ~= GS_PAUSED and GS_PAUSED or GS_ACTIVE
     end
 end
 
@@ -193,6 +210,9 @@ end
 
 -- Renders pause menu
 function render_pause()
+    -- Render background
+    love.graphics.setColor(0,0,0, 0.5)
+    love.graphics.rectangle("fill", 0, 0, SCREEN_X, SCREEN_Y)
 
     -- Render text
     print_hud_text("PAUSED", {1,1,1}, 0, 96, "center")
@@ -206,7 +226,12 @@ function render_wave_complete()
     love.graphics.rectangle("fill", 0, SCREEN_Y - 90, SCREEN_X, 64)
 
     -- Render text
-    local str = string.format("Wave %0d Complete!", gWaveManager.wave)
+    local str = ""
+    if intermission_timer < intermission_target / 2 then
+        str = string.format("Wave %0d Complete!", gWaveManager.wave)
+    else
+        str = "A new wave approaches..."
+    end
     print_hud_text(str, {1,1,1}, 0, SCREEN_Y - 64, "center")
 end
 
