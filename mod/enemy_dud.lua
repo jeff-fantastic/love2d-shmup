@@ -7,11 +7,19 @@
 require("mod.entity")
 EnemyDud = Entity:extend()
 
+local STATE_TRAVEL = 0
+local STATE_HONE   = 1
+local STATE_BACK   = 2
+local STATE_DEAD   = 3
+
+local SPEED        = 80
+
 function EnemyDud:new(x, y)
     EnemyDud.super:new()
+    self.state = STATE_TRAVEL
     self.x = x or 0
     self.y = y or 0
-    self.x_speed = -80
+    self.x_speed = -SPEED
     self.y_speed = 0
     self.width = 16
     self.height = 16
@@ -20,24 +28,46 @@ function EnemyDud:new(x, y)
 
     self.dead = false
     self.e_timer = 0
-    self.e_end = 1
+    self.e_end = .5
 end
 
 function EnemyDud:update(dt)
     self.super.update(self, dt)
 
-    -- Check if off screen
-    if self.x < -16 then
-        gEnemies:remove_at(self.rid)
-    end
+    switch(self.state) {
+        [STATE_TRAVEL] = function()
+            -- Check if adjacent to player
+            if self.x < gPlayer.x then
+                -- Check y relative to player
+                local ny = 0
+                if self.y > gPlayer.y then ny = -SPEED * 1.2
+                else                       ny = SPEED * 1.2 end
 
-    -- Check e_timer
-    if self.dead == true then
-        self.e_timer = self.e_timer + dt
-    end
-    if self.e_timer >= self.e_end then
-        gEnemies:remove_at(self.rid)
-    end
+                -- Set speed and state
+                self.state = STATE_HONE
+                self.y_speed = ny
+                self.x_speed = 0
+            end
+        end,
+        [STATE_HONE] = function()
+            -- Check if bordering on screen edge
+            if self.y >= SCREEN_Y - 16 or self.y <= 16 then
+                -- Time to go back lol
+                self.state = STATE_BACK
+                self.y_speed = 0
+                self.x_speed = SPEED
+            end
+        end,
+        [STATE_BACK] = function()
+            -- Check if we're off screen
+            if self.x >= SCREEN_X + 16 then gEnemies:remove_at(self.rid) end
+        end,
+        [STATE_DEAD] = function()
+            -- Increment death timer
+            self.e_timer = self.e_timer + dt
+            if self.e_timer >= self.e_end then gEnemies:remove_at(self.rid) end
+        end
+    }
 end
 
 function EnemyDud:draw()
@@ -45,9 +75,11 @@ function EnemyDud:draw()
 end
 
 function EnemyDud:destroy()
+    self.state = STATE_DEAD
     self.dead = true
     self.sprite = self.boom
     self.x_speed = 0
+    self.y_speed = 0
     gPoints = gPoints + 100
     forcePlay(sfxBoom)
 end
