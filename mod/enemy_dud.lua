@@ -66,8 +66,17 @@ function EnemyDud:update(dt)
             -- Increment death timer
             self.e_timer = self.e_timer + dt
             if self.e_timer >= self.e_end then gEnemies:remove_at(self.rid) end
+            -- Do not check for collisions with player
+            return
         end
     }
+
+    -- Check collisions with player
+    local res = self:handleCollision(gPlayer)
+    if res == true then
+        -- BYE BYE
+        gPlayer:destroy()
+    end
 end
 
 function EnemyDud:draw()
@@ -75,11 +84,14 @@ function EnemyDud:draw()
 end
 
 function EnemyDud:destroy()
+    -- Set values
     self.state = STATE_DEAD
     self.dead = true
-    self.sprite = self.boom
     self.x_speed = 0
     self.y_speed = 0
-    gPoints = gPoints + 100
+    self.sprite = self.boom
     forcePlay(sfxBoom)
+
+    -- Add points
+    gPoints = gPoints + 100
 end

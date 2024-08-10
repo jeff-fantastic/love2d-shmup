@@ -86,7 +86,7 @@ function WaveManager:processQueue()
             [_END] = function()
                 -- Set to intermission state
                 sfxComplete:play()
-                gState = GS_INTERMISSION
+                set_game_state(GS_INTERMISSION)
             end
         }
 

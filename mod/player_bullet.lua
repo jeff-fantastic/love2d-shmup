@@ -10,6 +10,7 @@ PlayerBullet = Object.extend(Entity)
 function PlayerBullet.new(self, x, y)
     Entity.super.new(self)
     self.sprite = love.graphics.newImage("asset/sprite/p_bullet.png")
+    self.boom = love.graphics.newImage("asset/sprite/boom.png")
     self.x = x or 0
     self.y = y or 0
     self.width = 8

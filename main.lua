@@ -8,6 +8,8 @@ require("mod.wave_manager")
 local screen
 local intermission_timer = 0
 local intermission_target = 10
+local dead_timer = 0
+local dead_target = 3
 
 -- CONSTANTS
 GS_ACTIVE       = 0
@@ -59,6 +61,35 @@ function love.load()
     math.randomseed(os.clock())
 end
 
+
+
+-- Called each frame.
+function love.update(delta)
+    switch(gState) {
+        [GS_ACTIVE] = function()
+            update_main(delta)
+            gWaveManager:update(delta)
+        end,
+        [GS_INTERMISSION] = function()
+            update_main(delta)
+
+            -- Update timer
+            intermission_timer = intermission_timer + delta
+            if intermission_timer >= intermission_target then
+                intermission_timer = 0
+                gWaveManager:incrementWave()
+                gState = GS_ACTIVE
+            end
+        end,
+        [GS_DEAD] = function()
+            gPlayer.update(gPlayer, delta)
+        end,
+        [GS_PAUSED] = function()
+            -- Update pause processing
+        end
+    }
+end
+
 -- Handles rendering each frame.
 function drawFunction()
     -- Render entities first
@@ -77,6 +108,9 @@ function drawFunction()
         end,
         [GS_PAUSED] = function()
             render_pause()
+        end,
+        [GS_DEAD] = function()
+            render_hud()
         end
     }
     render_debug()
@@ -86,43 +120,18 @@ function love.draw()
     screen:draw(drawFunction)
 end
 
--- Called each frame.
-function love.update(delta)
-    switch(gState) {
-        [GS_ACTIVE] = function()
-            -- Update player
-            gPlayer.update(gPlayer, delta)
+-- Main set of updates
+function update_main(delta)
+    -- Update player
+    gPlayer.update(gPlayer, delta)
 
-            -- Update wave manager
-            gWaveManager:update(delta)
-
-            -- Iterate and update bullets
-            for i, v in ipairs(gPlayerBullets.pool) do
-                v.update(v, delta)
-            end
-            for i, v in ipairs(gEnemies.pool) do
-                v.update(v, delta)
-            end
-        end,
-        [GS_INTERMISSION] = function()
-            -- Update player
-            gPlayer.update(gPlayer, delta)
-
-            -- Update timer
-            intermission_timer = intermission_timer + delta
-            if intermission_timer >= intermission_target then
-                intermission_timer = 0
-                gWaveManager:incrementWave()
-                gState = GS_ACTIVE
-            end
-        end,
-        [GS_DEAD] = function()
-
-        end,
-        [GS_PAUSED] = function()
-            -- Update pause processing
-        end
-    }
+    -- Iterate and update bullets
+    for i, v in ipairs(gPlayerBullets.pool) do
+        v.update(v, delta)
+    end
+    for i, v in ipairs(gEnemies.pool) do
+        v.update(v, delta)
+    end
 end
 
 -- Called when key is pressed.
@@ -168,6 +177,19 @@ end
 
 -- END PROCESS
 
+-- Sets game gState
+function set_game_state(state)
+    -- Determine entering behavior
+    switch(state) {
+        [GS_DEAD] = function()
+            -- Decrement lives
+            gLives = gLives - 1
+        end
+    }
+
+    -- Set state
+    gState = state
+end
 
 -- Manages option input
 function input_option(scancode)

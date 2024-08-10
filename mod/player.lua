@@ -9,13 +9,14 @@ require("mod.player_bullet")
 Player = Entity:extend()
 
 -- Initialize constants
-local STATE_ALIVE const = 0
-local STATE_DEAD const = 1
+local STATE_ALIVE = 0
+local STATE_DEAD  = 1
 
 -- Returns a player object
 function Player.new(self)
     Player.super.new(self)
     self.sprite = love.graphics.newImage("asset/sprite/player.png")
+    self.boom = love.graphics.newImage("asset/sprite/boom.png")
     self.state = STATE_ALIVE
     self.x = 32
     self.y = SCREEN_Y / 2
@@ -24,15 +25,26 @@ function Player.new(self)
     self.x_input = 0
     self.y_input = 0
     self.max_speed = 150
+
+    self.dead = false
+    self.e_timer = 0
+    self.e_end = 1
 end
 
 -- Update player based on input, collide
 function Player.update(self, dt)
-    -- Generate speed, if applicable
-    self.updateSpeed(self, dt)
-
-    -- Move based on input
-    self.super.update(self, dt)
+    switch(self.state) {
+        [STATE_ALIVE] = function()
+            -- Manage input and move
+            self.updateSpeed(self, dt)
+            self.super.update(self, dt)
+        end,
+        [STATE_DEAD] = function()
+            -- Increment death timer
+            self.e_timer = self.e_timer + dt
+            if self.e_timer >= self.e_end then self.dead = true end
+        end
+    }
 
     -- Clamp position on screen
     self.x = math.max(16, math.min(self.x, SCREEN_X / 3))
@@ -41,7 +53,7 @@ end
 
 -- Update player visuals
 function Player.draw(self)
-    self.super.draw(self)
+    if self.dead ~= true then self.super.draw(self) end
 end
 
 function Player.input(self, scancode)
@@ -69,6 +81,18 @@ end
 function Player.updateSpeed(self, dt)
     self.x_speed = self.x_speed + ((self.max_speed * self.x_input) - self.x_speed) * (12 * dt)
     self.y_speed = self.y_speed + ((self.max_speed * self.y_input) - self.y_speed) * (12 * dt)
+end
+
+function Player:destroy()
+    -- Set values
+    self.state = STATE_DEAD
+    self.x_speed = 0
+    self.y_speed = 0
+    self.sprite = self.boom
+    forcePlay(sfxBoom)
+
+    -- Set game state
+    set_game_state(GS_DEAD)
 end
 
 -- Converts bool into a number
