@@ -24,8 +24,17 @@ function Entity.update(self, dt)
 end
 
 function Entity.draw(self)
+    -- Draw sprite
+    local s_w = self.sprite:getWidth()
+    local s_h = self.sprite:getHeight()
     love.graphics.setColor(1, 1, 1)
-    love.graphics.draw(self.sprite, self.x - self.width / 2, self.y - self.height / 2)
+    love.graphics.draw(self.sprite, self.x - s_w / 2, self.y - s_h / 2)
+
+    -- Draw hitbox, if in debug
+    if gDebug == true then
+        love.graphics.setColor(1, 0, 0)
+        love.graphics.rectangle("line", self.x - self.width / 2, self.y - self.height / 2, self.width, self.height)
+    end
 end
 
 -- Handles collision checking between self and provided object

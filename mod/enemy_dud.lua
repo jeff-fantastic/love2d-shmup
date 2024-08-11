@@ -51,7 +51,7 @@ function EnemyDud:update(dt)
         end,
         [STATE_HONE] = function()
             -- Check if bordering on screen edge
-            if self.y >= SCREEN_Y - 16 or self.y <= 16 then
+            if self.y >= SCREEN_Y - 16 or self.y <= HUD_HEIGHT + 16 then
                 -- Time to go back lol
                 self.state = STATE_BACK
                 self.y_speed = 0

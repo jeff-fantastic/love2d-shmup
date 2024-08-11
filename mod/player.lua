@@ -12,16 +12,20 @@ Player = Entity:extend()
 local STATE_ALIVE = 0
 local STATE_DEAD  = 1
 
+local WEAPON_SINGLE = 1
+local WEAPON_TRIPLE = 2
+
 -- Returns a player object
 function Player.new(self)
     Player.super.new(self)
-    self.sprite = love.graphics.newImage("asset/sprite/player.png")
+    self.sprite = imgPlayer
     self.boom = love.graphics.newImage("asset/sprite/boom.png")
     self.state = STATE_ALIVE
+    self.weapon = WEAPON_SINGLE
     self.x = 32
     self.y = SCREEN_Y / 2
-    self.width = 16
-    self.height = 16
+    self.width = 8
+    self.height = 8
     self.x_input = 0
     self.y_input = 0
     self.max_speed = 150
@@ -48,7 +52,7 @@ function Player.update(self, dt)
 
     -- Clamp position on screen
     self.x = math.max(16, math.min(self.x, SCREEN_X / 3))
-    self.y = math.max(16, math.min(self.y, SCREEN_Y - 16))
+    self.y = math.max(16 + HUD_HEIGHT, math.min(self.y, SCREEN_Y - 16))
 end
 
 -- Update player visuals
@@ -93,6 +97,11 @@ function Player:destroy()
 
     -- Set game state
     set_game_state(GS_DEAD)
+end
+
+-- Returns weapon graphic
+function Player:getWeaponGraphic()
+    return imgWeapon[self.weapon]
 end
 
 -- Converts bool into a number

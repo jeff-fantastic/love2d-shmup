@@ -17,8 +17,9 @@ GS_DEAD         = 1
 GS_INTERMISSION = 2
 GS_PAUSED       = 3
 
-SCREEN_X  = 320
-SCREEN_Y  = 240
+SCREEN_X   = 320
+SCREEN_Y   = 240
+HUD_HEIGHT = 48
 
 -- MAIN FUNCTIONS
 function love.load()
@@ -34,6 +35,18 @@ function love.load()
     love.graphics.setColor(1, 1, 1)
     love.graphics.setBackgroundColor(0.2, 0.2, 0.2)
     recenter()
+
+    -- Load images
+    imgHudZ = love.graphics.newImage("asset/sprite/hud_z.png")
+    imgHudX = love.graphics.newImage("asset/sprite/hud_x.png")
+    imgPlayer = love.graphics.newImage("asset/sprite/player.png")
+    imgWeapon = {
+        love.graphics.newImage("asset/sprite/weapon_bullet.png"),
+        love.graphics.newImage("asset/sprite/weapon_triple.png")
+    }
+    imgSpecial = {
+        love.graphics.newImage("asset/sprite/special_bomb.png")
+    }
 
     -- Set up game variables
     gLives = 3
@@ -107,6 +120,7 @@ function drawFunction()
             render_wave_complete()
         end,
         [GS_PAUSED] = function()
+            render_hud()
             render_pause()
         end,
         [GS_DEAD] = function()
@@ -212,10 +226,29 @@ end
 
 -- Renders HUD to screen
 function render_hud()
-    -- Draw HUD
+    -- Draw HUD box
     love.graphics.setColor(0,0,0)
-    print_hud_text(string.format("Points: %08d", gPoints), {1,1,1}, 16, 16)
-    print_hud_text(string.format("Lives: %02d", gLives), {1,1,1}, 16, 32)
+    love.graphics.rectangle("fill", 0, 0, SCREEN_X, HUD_HEIGHT)
+
+    -- Draw HUD graphics
+    love.graphics.setColor(1,1,1)
+    love.graphics.draw(imgHudZ, love.math.newTransform(SCREEN_X - 86, 8))
+    love.graphics.draw(gPlayer:getWeaponGraphic(), love.math.newTransform(SCREEN_X - 82, 12))
+    love.graphics.draw(imgHudX, love.math.newTransform(SCREEN_X - 48, 8))
+
+    -- Draw points text
+    print_small_text("SCORE", {1,1,1}, 0, 12, "center")
+    print_hud_text(string.format("%08d", gPoints), {1,1,1}, 0, 26, "center")
+
+    -- Draw lives graphics
+    for i=1,gLives do
+        love.graphics.draw(imgPlayer, love.math.newTransform(12 + (20 * (i - 1)), 8))
+    end
+
+    -- Draw combo
+    print_small_text("x0", {1,1,1}, 12, 28)
+    love.graphics.rectangle("fill", 12, 38, 80, 3)
+
 end
 
 -- Renders debug info to screen, if applicable

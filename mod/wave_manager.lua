@@ -105,7 +105,7 @@ function WaveManager:spawnEnemy()
     for i,v in ipairs(spawn) do
         -- Determine random spawn
         local spawn_x = SCREEN_X + 12
-        local spawn_y = math.max(16, math.min(math.random() * SCREEN_Y, SCREEN_Y - 16))
+        local spawn_y = math.max(HUD_HEIGHT + 16, math.min(math.random() * SCREEN_Y, SCREEN_Y - 16))
 
         -- Add to queue
         table.insert(spawn_queue, {v, spawn_x, spawn_y})
