@@ -10,7 +10,7 @@ EnemyDud = Entity:extend()
 local STATE_TRAVEL = 0
 local STATE_HONE   = 1
 local STATE_BACK   = 2
-local STATE_DEAD   = 3
+local STATE_DEAD   = -1
 
 local SPEED        = 80
 
@@ -23,12 +23,8 @@ function EnemyDud:new(x, y)
     self.y_speed = 0
     self.width = 16
     self.height = 16
+    self.points = 100
     self.sprite = love.graphics.newImage("asset/sprite/enemy_dud.png")
-    self.boom = love.graphics.newImage("asset/sprite/boom.png")
-
-    self.dead = false
-    self.e_timer = 0
-    self.e_end = .5
 end
 
 function EnemyDud:update(dt)
@@ -81,17 +77,4 @@ end
 
 function EnemyDud:draw()
     self.super.draw(self)
-end
-
-function EnemyDud:destroy()
-    -- Set values
-    self.state = STATE_DEAD
-    self.dead = true
-    self.x_speed = 0
-    self.y_speed = 0
-    self.sprite = self.boom
-    forcePlay(sfxBoom)
-
-    -- Add points
-    addPoints(100)
 end

@@ -4,10 +4,13 @@
 --- DateTime: 8/8/24 3:47 PM
 ---
 
+--- Base class for all moving objects
+
 Entity = Object.extend(Object)
 
 function Entity.new(self)
     self.rid = 0
+    self.state = 0
     self.x = 0
     self.y = 0
     self.width = 0
@@ -15,7 +18,13 @@ function Entity.new(self)
     self.x_speed = 0
     self.y_speed = 0
     self.max_speed = 0
+    self.points = 0
     self.sprite = love.graphics.newImage("asset/sprite/temp.png")
+
+    self.boom = love.graphics.newImage("asset/sprite/boom.png")
+    self.dead = false
+    self.e_timer = 0
+    self.e_end = .5
 end
 
 function Entity.update(self, dt)
@@ -56,4 +65,17 @@ function Entity.handleCollision(self, obj)
         return true
     end
     return false
+end
+
+function Entity:destroy()
+    -- Set values
+    self.state = -1
+    self.dead = true
+    self.x_speed = 0
+    self.y_speed = 0
+    self.sprite = self.boom
+    forcePlay(sfxBoom)
+
+    -- Add points
+    addPoints(self.points)
 end
