@@ -34,7 +34,6 @@ function love.load()
     debug = love.graphics.newFont("asset/fnt/debug.ttf", 8)
     font = love.graphics.setNewFont("asset/fnt/retro.ttf", 16)
     love.graphics.setColor(1, 1, 1)
-    love.graphics.setBackgroundColor(0.2, 0.2, 0.2)
     recenter()
 
     -- Load images
@@ -108,7 +107,11 @@ end
 
 -- Handles rendering each frame.
 function drawFunction()
-    -- Render entities first
+    -- Render background
+    love.graphics.setColor(0.2, 0.2, 0.2)
+    love.graphics.rectangle("fill", 0, 0, SCREEN_X, SCREEN_Y)
+
+    -- Render entities
     for i, v in ipairs(gPlayerBullets.pool) do v.draw(v) end
     gPlayer.draw(gPlayer)
     for i, v in ipairs(gEnemies.pool) do v.draw(v) end
