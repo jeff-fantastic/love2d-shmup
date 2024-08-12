@@ -4,6 +4,7 @@ Terebi = require("mod.terebi")
 require("mod.pool")
 require("mod.player")
 require("mod.wave_manager")
+require("mod.combo")
 
 local screen
 local intermission_timer = 0
@@ -59,6 +60,7 @@ function love.load()
     gPlayerBullets = Pool(3)
     gWaveManager = WaveManager()
     gPlayer = Player()
+    gCombo = ComboManager()
 
     -- Load sound effects into memory
     musDub = love.audio.newSource("asset/snd/jam2.xm", "static")
@@ -136,8 +138,8 @@ end
 
 -- Main set of updates
 function update_main(delta)
-    -- Update player
-    gPlayer.update(gPlayer, delta)
+    gPlayer:update(delta)
+    gCombo:update(delta)
 
     -- Iterate and update bullets
     for i, v in ipairs(gPlayerBullets.pool) do
@@ -246,8 +248,10 @@ function render_hud()
     end
 
     -- Draw combo
-    print_small_text("x0", {1,1,1}, 12, 28)
-    love.graphics.rectangle("fill", 12, 38, 80, 3)
+    if gCombo.active == true then
+        print_small_text(string.format("x%0d", gCombo.multiplier), {1,1,1}, 12, 28)
+        love.graphics.rectangle("fill", 12, 38, 80 - (80 * (gCombo.current_time / gCombo.time_to_end)), 3)
+    end
 
 end
 
@@ -336,6 +340,12 @@ function switch(x)
             func()
         end
     end
+end
+
+-- Adds points, increments combo
+function addPoints(points)
+    gPoints = gPoints + points
+    gCombo:increment(points)
 end
 
 -- Ensures sound effect is played on call

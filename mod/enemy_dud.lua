@@ -93,5 +93,5 @@ function EnemyDud:destroy()
     forcePlay(sfxBoom)
 
     -- Add points
-    gPoints = gPoints + 100
+    addPoints(100)
 end
