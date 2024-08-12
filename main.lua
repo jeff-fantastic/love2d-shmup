@@ -67,6 +67,7 @@ function love.load()
     sfxShoot = love.audio.newSource("asset/snd/shoot.wav", "static")
     sfxComplete = love.audio.newSource("asset/snd/wave_complete.wav", "static")
     sfxBoom = love.audio.newSource("asset/snd/explode.wav", "static")
+    sfxCombo = love.audio.newSource("asset/snd/combo.wav", "static")
 
     musDub:setVolume(0.25)
     musDub:setLooping(true)

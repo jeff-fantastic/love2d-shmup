@@ -34,6 +34,7 @@ function ComboManager:update(delta)
 
             -- Initialize
             self:init()
+            forcePlay(sfxCombo)
         end
     end
 end
