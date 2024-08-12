@@ -8,7 +8,7 @@ require("mod.combo")
 
 local screen
 local intermission_timer = 0
-local intermission_target = 10
+local intermission_target = 6
 local dead_timer = 0
 local dead_target = 3
 
