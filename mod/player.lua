@@ -21,7 +21,7 @@ function Player.new(self)
     self.sprite = imgPlayer
     self.boom = love.graphics.newImage("asset/sprite/boom.png")
     self.state = STATE_ALIVE
-    self.weapon = WEAPON_SINGLE
+    self.weapon = WEAPON_TRIPLE
     self.x = 32
     self.y = SCREEN_Y / 2
     self.width = 8
@@ -67,17 +67,7 @@ function Player.input(self, scancode)
 
     -- Check for shooting
     if scancode == "z" then
-        -- Create a bullet at our position
-        local b = PlayerBullet(self.x, self.y)
-        b.x = self.x
-        b.y = self.y
-
-        -- Add to pool
-        local res = gPlayerBullets:append(b)
-        if res == true then
-            -- Play sound effect
-            forcePlay(sfxShoot)
-        end
+        self:fireWeapon()
     end
 end
 
@@ -97,6 +87,44 @@ function Player:destroy()
 
     -- Set game state
     set_game_state(GS_DEAD)
+end
+
+-- Fires weapon
+function Player:fireWeapon()
+    switch(self.weapon) {
+        [WEAPON_SINGLE] = function()
+            -- Create a bullet at our position
+            local b = PlayerBullet(self.x, self.y)
+            b.x = self.x
+            b.y = self.y
+
+            -- Add to pool
+            local res = gPlayerBullets:append(b)
+            if res == true then
+                -- Play sound effect
+                forcePlay(sfxShoot)
+            end
+        end,
+        [WEAPON_TRIPLE] = function()
+            -- Abort if any bullets exist
+            if gPlayerBullets.count > 0 then return end
+
+            -- Create triple bullet
+            for i=0,2 do
+                local b = PlayerBullet(self.x, self.y)
+                b.x = self.x
+                b.y = self.y
+                b.y_speed = 30 + (-30 * i)
+
+                -- Add to pool
+                local res = gPlayerBullets:append(b)
+                if res == true then
+                    -- Play sound effect
+                    forcePlay(sfxShoot)
+                end
+            end
+        end
+    }
 end
 
 -- Returns weapon graphic
