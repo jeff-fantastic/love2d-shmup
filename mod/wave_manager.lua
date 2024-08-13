@@ -7,6 +7,7 @@
 --- Manages the spawning of enemies
 
 require("mod.enemy_dud")
+require("mod.enemy_shooter")
 WaveManager = Object:extend()
 
 _NONE    = 0
@@ -27,8 +28,8 @@ local waves = {
     -- Wave 2
     {
         interval = 1.75,
-        spawns = { { _DUD }, { _DUD, _DUD }, { _DUD, _DUD }, { _DUD }, { _NONE }, { _DUD }, { _DUD },
-                   { _DUD }, { _NONE }, { _DUD, _SHOOTER }, { _DUD }, { _DUD, _SHOOTER }, { _NONE }, { _DUD },
+        spawns = { { _DUD }, { _DUD, _DUD }, { _DUD, _DUD }, { _DUD }, { _SHOOTER }, { _DUD }, { _DUD },
+                   { _DUD }, { _DUD }, { _DUD, _SHOOTER }, { _DUD }, { _DUD, _SHOOTER }, { _NONE }, { _DUD },
                    { _NONE }, { _DUD }, { _DUD }, { _END }}
     }
 }
@@ -63,8 +64,17 @@ end
 -- Increments wave count
 function WaveManager:incrementWave()
     self.wave = self.wave + 1
+    self.interval = waves[self.wave].interval
     self.wave_pos = 0
     self.wait = 0.0
+    self.micro_wait = 0.0
+end
+
+-- Restarts current wave
+function WaveManager:restartWave()
+    self.wave_pos = 0
+    self.wait = 0.0
+    self.micro_wait = 0.0
 end
 
 -- Processes enemy spawn queue
@@ -82,6 +92,12 @@ function WaveManager:processQueue()
                 local d = EnemyDud(spawn_x, spawn_y)
                 gEnemies:append(d)
                 print("Spawned EnemyDud")
+            end,
+            [_SHOOTER] = function()
+                -- Create shooter object
+                local s = EnemyShooter(spawn_x, spawn_y)
+                gEnemies:append(s)
+                print("Spawned EnemyShooter")
             end,
             [_END] = function()
                 -- Set to intermission state
@@ -112,3 +128,20 @@ function WaveManager:spawnEnemy()
     end
 end
 
+-- Debug input
+function WaveManager:input(scancode)
+    -- Abort when no debug
+    if gDebug == false then return end
+
+    -- Generate random
+    local spawn_x = SCREEN_X + 12
+    local spawn_y = math.max(HUD_HEIGHT + 16, math.min(math.random() * SCREEN_Y, SCREEN_Y - 16))
+
+    if scancode == "f1" then
+        -- Spawn dud at random
+        table.insert(spawn_queue, {_DUD, spawn_x, spawn_y})
+    elseif scancode == "f2" then
+        -- Spawn shooter at random
+        table.insert(spawn_queue, {_SHOOTER, spawn_x, spawn_y})
+    end
+end

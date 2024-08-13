@@ -62,7 +62,7 @@ function love.load()
     gCombo = ComboManager()
 
     -- Load sound effects into memory
-    musDub = love.audio.newSource("asset/snd/jam2.xm", "static")
+    musDub = love.audio.newSource("asset/snd/spectrum.xm", "static")
     sfxShoot = love.audio.newSource("asset/snd/shoot.wav", "static")
     sfxComplete = love.audio.newSource("asset/snd/wave_complete.wav", "static")
     sfxBoom = love.audio.newSource("asset/snd/explode.wav", "static")
@@ -75,8 +75,6 @@ function love.load()
     -- Seed randomizer
     math.randomseed(os.clock())
 end
-
-
 
 -- Called each frame.
 function love.update(delta)
@@ -160,6 +158,9 @@ function love.keypressed(key, scancode, isrepeat)
         [GS_ACTIVE] = function()
             -- Update player input
             gPlayer.input(gPlayer, scancode)
+
+            -- Update wave manager debug
+            gWaveManager:input(scancode)
 
             -- Handle option input
             input_option(scancode)

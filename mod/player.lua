@@ -10,7 +10,7 @@ Player = Entity:extend()
 
 -- Initialize constants
 local STATE_ALIVE = 0
-local STATE_DEAD  = 1
+local STATE_DEAD  = -1
 
 local WEAPON_SINGLE = 1
 local WEAPON_TRIPLE = 2

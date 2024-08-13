@@ -10,7 +10,6 @@ PlayerBullet = Object.extend(Entity)
 function PlayerBullet.new(self, x, y)
     Entity.super.new(self)
     self.sprite = love.graphics.newImage("asset/sprite/p_bullet.png")
-    self.boom = love.graphics.newImage("asset/sprite/boom.png")
     self.x = x or 0
     self.y = y or 0
     self.width = 8
@@ -25,7 +24,7 @@ function PlayerBullet.update(self, dt)
     -- Check collisions
     for i,v in ipairs(gEnemies.pool) do
         local res = self.handleCollision(self, v)
-        if res == true and v.dead == false then
+        if res == true and v.state ~= -1 then
             v:destroy()
             gPlayerBullets:remove_at(self.rid)
         end
