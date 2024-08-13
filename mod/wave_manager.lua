@@ -63,6 +63,7 @@ end
 
 -- Increments wave count
 function WaveManager:incrementWave()
+    self.queue = {}
     self.wave = self.wave + 1
     self.interval = waves[self.wave].interval
     self.wave_pos = 0
@@ -72,6 +73,7 @@ end
 
 -- Restarts current wave
 function WaveManager:restartWave()
+    self.queue = {}
     self.wave_pos = 0
     self.wait = 0.0
     self.micro_wait = 0.0

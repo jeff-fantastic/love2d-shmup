@@ -62,14 +62,12 @@ function EnemyDud:update(dt)
             -- Increment death timer
             self.e_timer = self.e_timer + dt
             if self.e_timer >= self.e_end then gEnemies:remove_at(self.rid) end
-            -- Do not check for collisions with player
-            return
         end
     }
 
     -- Check collisions with player
     local res = self:handleCollision(gPlayer)
-    if res == true then
+    if res == true and self.state ~= STATE_DEAD then
         -- BYE BYE
         gPlayer:destroy()
     end

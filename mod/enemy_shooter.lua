@@ -28,15 +28,13 @@ function EnemyShooter:new(x, y)
     self.y_speed = y - HUD_HEIGHT > (SCREEN_Y - HUD_HEIGHT) / 2 and -40 or 40
     self.points = 250
 
-    self.bullet_pool = Pool(1)
+    self.bullet_pool = Pool(2)
     self.c_current = 0.0
-    self.c_target = 0.75
+    self.c_target = 1.5
 end
 
 function EnemyShooter:update(dt)
     self.super.update(self, dt)
-    print(self.bullet_pool.count)
-
 
     switch(self.state) {
         [STATE_TRAVEL] = function()
@@ -52,8 +50,8 @@ function EnemyShooter:update(dt)
             if self.c_current >= self.c_target then
                 -- Shoot bullet
                 local b = EnemyBullet(self.x, self.y, self.bullet_pool)
-                self.bullet_pool:append(b)
-                forcePlay(sfxShoot)
+                local res = self.bullet_pool:append(b)
+                if res == true then forcePlay(sfxShoot) end
 
                 -- Reset timer
                 self.c_current = 0.0
@@ -62,7 +60,9 @@ function EnemyShooter:update(dt)
         [STATE_DEAD] = function()
             -- Increment death timer
             self.e_timer = self.e_timer + dt
-            if self.e_timer >= self.e_end then gEnemies:remove_at(self.rid) end
+            if self.e_timer >= self.e_end then
+                if self.bullet_pool.count == 0 then gEnemies:remove_at(self.rid) end
+            end
         end
     }
 
@@ -77,6 +77,7 @@ function EnemyShooter:update(dt)
 end
 
 function EnemyShooter:draw()
+
     self.super.draw(self)
 
     for i,v in ipairs(self.bullet_pool.pool) do

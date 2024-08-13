@@ -96,6 +96,16 @@ function love.update(delta)
         end,
         [GS_DEAD] = function()
             gPlayer.update(gPlayer, delta)
+
+            -- Update timer
+            dead_timer = dead_timer + delta
+            if dead_timer >= dead_target then
+                dead_timer = 0
+                gWaveManager:restartWave()
+                gPlayer = Player()
+                gEnemies = Pool(10)
+                gState = GS_ACTIVE
+            end
         end,
         [GS_PAUSED] = function()
             -- Update pause processing
