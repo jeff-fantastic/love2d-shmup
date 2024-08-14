@@ -1,6 +1,7 @@
 -- REQUIRES
 Object = require("mod.classic")
 Terebi = require("mod.terebi")
+require("mod.background")
 require("mod.pool")
 require("mod.player")
 require("mod.wave_manager")
@@ -20,7 +21,7 @@ GS_PAUSED       = 3
 
 SCREEN_X   = 320
 SCREEN_Y   = 240
-HUD_HEIGHT = 48
+HUD_HEIGHT = 50
 
 -- MAIN FUNCTIONS
 function love.load()
@@ -29,6 +30,9 @@ function love.load()
     Terebi.initializeLoveDefaults()
     screen = Terebi.newScreen(320, 240, 2)
         :setBackgroundColor(0,0,0)
+
+    -- Seed randomizer
+    math.randomseed(os.clock())
 
     -- Initialize graphics and center window
     debug = love.graphics.newFont("asset/fnt/debug.ttf", 8)
@@ -55,6 +59,7 @@ function love.load()
     gDebug = true
 
     -- Set up objects/pools
+    gBackground = Background()
     gEnemies = Pool(10)
     gPlayerBullets = Pool(3)
     gWaveManager = WaveManager()
@@ -71,9 +76,6 @@ function love.load()
     musDub:setVolume(0.25)
     musDub:setLooping(true)
     musDub:play()
-
-    -- Seed randomizer
-    math.randomseed(os.clock())
 end
 
 -- Called each frame.
@@ -116,8 +118,9 @@ end
 -- Handles rendering each frame.
 function drawFunction()
     -- Render background
-    love.graphics.setColor(0.2, 0.2, 0.2)
+    love.graphics.setColor(0, 0, 0)
     love.graphics.rectangle("fill", 0, 0, SCREEN_X, SCREEN_Y)
+    gBackground:draw()
 
     -- Render entities
     for i, v in ipairs(gPlayerBullets.pool) do v.draw(v) end
@@ -152,6 +155,7 @@ end
 function update_main(delta)
     gPlayer:update(delta)
     gCombo:update(delta)
+    gBackground:update(delta)
 
     -- Iterate and update bullets
     for i, v in ipairs(gPlayerBullets.pool) do
@@ -246,6 +250,8 @@ function render_hud()
     -- Draw HUD box
     love.graphics.setColor(0,0,0)
     love.graphics.rectangle("fill", 0, 0, SCREEN_X, HUD_HEIGHT)
+    love.graphics.setColor(1,1,1)
+    love.graphics.rectangle("fill", 0, HUD_HEIGHT, SCREEN_X, 1)
 
     -- Draw HUD graphics
     love.graphics.setColor(1,1,1)
